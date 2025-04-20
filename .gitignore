@@ -1,0 +1,17 @@
+.vscode/
+ubuntu-*
+busybox-*
+linux-5.19.17/
+linux-6.13.3/
+edk2/**
+
+!linux-5.19.17/include/
+!linux-5.19.17/include/linux/
+!linux-5.19.17/include/linux/syscalls.h
+!linux-5.19.17/include/linux/sched.h
+
+!linux-5.19.17/kernel/
+!linux-5.19.17/kernel/kv_store.c
+
+!edk2/assn1Pkg/
+!edk2/assn1Pkg/*
