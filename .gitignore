@@ -1,7 +1,7 @@
 .vscode/
 ubuntu-*
 busybox-*
-linux-5.19.17/
+linux-5.19.17/**
 linux-6.13.3/
 edk2/
 
