@@ -11,4 +11,11 @@ edk2/
 !linux-5.19.17/include/linux/sched.h
 
 !linux-5.19.17/kernel/
-!linux-5.19.17/kernel/kv_store.c
+!linux-5.19.17/kernel/fork.c
+!linux-5.19.17/kernel/kv_pair.c
+
+!linux-5.19.17/arch/
+!linux-5.19.17/arch/x86/
+!linux-5.19.17/arch/x86/entry/
+!linux-5.19.17/arch/x86/entry/syscalls/
+!linux-5.19.17/arch/x86/entry/syscalls/syscall_64.tbl
