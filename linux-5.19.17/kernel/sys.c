@@ -2499,10 +2499,54 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info) {
 }
 #endif /* CONFIG_COMPAT */
 
-// SYSCALL_DEFINE2(write_kv, int, k, int, v) {
-//   // TODO
-// }
+#define __KV_HASH 1024
+#include <linux/kv_pair.h>
 
-// SYSCALL_DEFINE1(read_kv, int, k) {
-//   // TODO
-// }
+SYSCALL_DEFINE2(write_kv, int, k, int, v) {
+  struct task_struct *current_task = current;
+  unsigned int bucket = k % __KV_HASH;
+  struct kv_pair *entry;
+
+  spin_lock(&current_task->kv_lock[bucket]);
+
+  hlist_for_each_entry(entry, &current_task->kv_store[bucket], node) {
+    if (entry->key == k) {  // hash collision
+      entry->value = v;
+      spin_unlock(&current_task->kv_lock[bucket]);
+      return sizeof(int);
+    }
+  }
+
+  entry = kmalloc(sizeof(struct kv_pair), GFP_KERNEL);
+
+  if (!entry) {  // failed to allocate
+    spin_unlock(&current_task->kv_lock[bucket]);
+    return -1;
+  }
+
+  entry->key = k;
+  entry->value = v;
+  hlist_add_head(&entry->node, &current_task->kv_store[bucket]);
+
+  spin_unlock(&current_task->kv_lock[bucket]);
+  return sizeof(int);
+}
+
+SYSCALL_DEFINE1(read_kv, int, k) {
+  struct task_struct *current_task = current;
+  unsigned int bucket = k % __KV_HASH;
+  struct kv_pair *entry;
+  int ret = -1;  // default value
+
+  spin_lock(&current_task->kv_lock[bucket]);
+
+  hlist_for_each_entry(entry, &current_task->kv_store[bucket], node) {
+    if (entry->key == k) {
+      ret = entry->value;
+      break;
+    }
+  }
+
+  spin_unlock(&current_task->kv_lock[bucket]);
+  return ret;
+}

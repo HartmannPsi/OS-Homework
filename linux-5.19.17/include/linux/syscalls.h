@@ -1370,14 +1370,11 @@ int __sys_getsockopt(int fd, int level, int optname, char __user *optval,
 int __sys_setsockopt(int fd, int level, int optname, char __user *optval,
                      int optlen);
 
-// int write_kv(int k, int v) {
-//   // TODO
-//   return -1;
-// }
+#define __NR_write_kv 452
+#define __NR_read_kv 451
 
-// int read_kv(int k) {
-//   // TODO
-//   return -1;
-// }
+int write_kv(int k, int v) { return syscall(__NR_write_kv, k, v); }
+
+int read_kv(int k) { return syscall(__NR_read_kv, k); }
 
 #endif

@@ -9,10 +9,12 @@ edk2/
 !linux-5.19.17/include/linux/
 !linux-5.19.17/include/linux/syscalls.h
 !linux-5.19.17/include/linux/sched.h
+!linux-5.19.17/include/linux/kv_pair.h
 
 !linux-5.19.17/kernel/
 !linux-5.19.17/kernel/fork.c
-!linux-5.19.17/kernel/kv_pair.c
+!linux-5.19.17/kernel/sys.c
+
 
 !linux-5.19.17/arch/
 !linux-5.19.17/arch/x86/

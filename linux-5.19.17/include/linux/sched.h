@@ -1508,8 +1508,8 @@ struct task_struct {
    * they are included in the randomized portion of task_struct.
    */
 
-  // struct hlist_head kv_store[1024];
-  // spinlock_t kv_lock[1024];
+  struct hlist_head kv_store[1024];
+  spinlock_t kv_lock[1024];
 
   randomized_struct_fields_end
 
