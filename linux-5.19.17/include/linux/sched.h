@@ -9,6 +9,7 @@
 
 #include <asm/current.h>
 #include <asm/kmap_size.h>
+#include <linux/export.h>
 #include <linux/hrtimer.h>
 #include <linux/irqflags.h>
 #include <linux/kcsan.h>
@@ -1543,6 +1544,7 @@ pid_t __task_pid_nr_ns(struct task_struct *task, enum pid_type type,
                        struct pid_namespace *ns);
 
 static inline pid_t task_pid_nr(struct task_struct *tsk) { return tsk->pid; }
+EXPORT_SYMBOL(task_pid_nr);
 
 static inline pid_t task_pid_nr_ns(struct task_struct *tsk,
                                    struct pid_namespace *ns) {

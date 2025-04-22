@@ -10,11 +10,14 @@ edk2/
 !linux-5.19.17/include/linux/syscalls.h
 !linux-5.19.17/include/linux/sched.h
 !linux-5.19.17/include/linux/kv_pair.h
+!linux-5.19.17/include/linux/vgettask.h
 
 !linux-5.19.17/kernel/
 !linux-5.19.17/kernel/fork.c
 !linux-5.19.17/kernel/sys.c
 !linux-5.19.17/kernel/exit.c
+!linux-5.19.17/kernel/sched/
+!linux-5.19.17/kernel/sched/core.c
 
 
 !linux-5.19.17/arch/
@@ -25,3 +28,5 @@ edk2/
 
 !linux-5.19.17/arch/x86/entry/vdso/
 !linux-5.19.17/arch/x86/entry/vdso/vdso.lds.S
+
+!linux-5.19.17/arch/x86/entry/vdso/vgettask.c
