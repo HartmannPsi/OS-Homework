@@ -22,3 +22,6 @@ edk2/
 !linux-5.19.17/arch/x86/entry/
 !linux-5.19.17/arch/x86/entry/syscalls/
 !linux-5.19.17/arch/x86/entry/syscalls/syscall_64.tbl
+
+!linux-5.19.17/arch/x86/entry/vdso/
+!linux-5.19.17/arch/x86/entry/vdso/vdso.lds.S
