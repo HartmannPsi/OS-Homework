@@ -30,3 +30,5 @@ edk2/
 !linux-5.19.17/arch/x86/entry/vdso/vdso.lds.S
 
 !linux-5.19.17/arch/x86/entry/vdso/vgettask.c
+
+memPkg/mem_page_modify.c
