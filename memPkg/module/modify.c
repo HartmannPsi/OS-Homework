@@ -6,6 +6,7 @@
 #include <linux/sched.h>
 #include <linux/uaccess.h>
 
+// convert virt addr to phys addr
 struct addr_translation {
   unsigned long vaddr;  // virtual addr
   unsigned long paddr;  // physical addr
