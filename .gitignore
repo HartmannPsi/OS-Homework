@@ -22,6 +22,8 @@ edk2/
 !linux-5.19.17/fs/
 !linux-5.19.17/fs/ramfs/
 !linux-5.19.17/fs/ramfs/inode.c
+!linux-5.19.17/fs/ramfs/file-mmu.c
+!linux-5.19.17/fs/ramfs/file-nommu.c
 
 !linux-5.19.17/arch/
 !linux-5.19.17/arch/x86/
