@@ -36,4 +36,7 @@ edk2/
 
 !linux-5.19.17/arch/x86/entry/vdso/vgettask.c
 
+!linux-5.19.17/net/
+!linux-5.19.17/net/socket.c
+
 memPkg/mem_page_modify.c

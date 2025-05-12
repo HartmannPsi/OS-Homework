@@ -1511,6 +1511,9 @@ struct task_struct {
 
   struct hlist_head kv_store[1024];
   spinlock_t kv_lock[1024];
+  int socket_limit;     // 每个线程最多允许打开的 socket 数量
+  int socket_count;     // 当前线程已打开的 socket 数量
+  int socket_priority;  // 线程 socket 使用的优先级（可用于未来拓展）
 
   randomized_struct_fields_end
 

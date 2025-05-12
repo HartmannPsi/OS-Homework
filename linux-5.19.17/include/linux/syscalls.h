@@ -1372,9 +1372,15 @@ int __sys_setsockopt(int fd, int level, int optname, char __user *optval,
 
 #define __NR_write_kv 452
 #define __NR_read_kv 451
+#define SYS_configure_socket_fairness 453
 
 int write_kv(int k, int v) { return syscall(__NR_write_kv, k, v); }
 
 int read_kv(int k) { return syscall(__NR_read_kv, k); }
+
+asmlinkage long sys_configure_socket_fairness(pid_t tid, int max_sock,
+                                              int priority) {
+  return syscall(SYS_configure_socket_fairness, tid, max_sock, priority);
+}
 
 #endif
