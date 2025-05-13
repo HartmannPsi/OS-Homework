@@ -134,6 +134,7 @@
   ShellPkg/Application/ShellCTestApp/ShellCTestApp.inf
   ShellPkg/Application/ShellExecTestApp/SA.inf
   ShellPkg/Application/ShellSortTestApp/ShellSortTestApp.inf
+  ShellPkg/Application/PrintAcpi/PrintAcpi.inf
 
   ShellPkg/DynamicCommand/TftpDynamicCommand/TftpDynamicCommand.inf {
     <PcdsFixedAtBuild>
