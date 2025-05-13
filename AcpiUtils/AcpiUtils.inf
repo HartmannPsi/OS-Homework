@@ -1,0 +1,23 @@
+[Defines]
+  INF_VERSION    = 0x0001001B
+  BASE_NAME      = AcpiUtils
+  FILE_GUID      = 1E9A3B6C-2D4F-48A8-B3A9-ABCDEF123456
+  MODULE_TYPE    = BASE
+  VERSION_STRING = 1.0
+  LIBRARY_CLASS  = AcpiUtils
+
+[Sources]
+  AcpiUtils.c     # 包含 PrintAllACPITables 实现
+  AcpiUtils.h     # 头文件
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  UefiLib
+  BaseMemoryLib
+  DebugLib
+
+[Protocols]
+  gEfiAcpiSdtProtocolGuid
