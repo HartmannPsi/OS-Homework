@@ -3,7 +3,10 @@ ubuntu-*
 busybox-*
 linux-5.19.17/**
 linux-6.13.3/
-edk2/
+edk2/**
+
+!edk2/ShellPkg/
+!edk2/ShellPkg/ShellPkg.dsc
 
 !linux-5.19.17/include/
 !linux-5.19.17/include/linux/
@@ -40,3 +43,8 @@ edk2/
 !linux-5.19.17/net/socket.c
 
 memPkg/mem_page_modify.c
+
+compile_edk.sh
+test.sh
+error.txt
+uefi/

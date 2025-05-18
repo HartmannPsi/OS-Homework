@@ -10,16 +10,15 @@
 
 [Defines]
   INF_VERSION                    = 0x0001001B
-  BASE_NAME                      = AcpiViewApp
-  FILE_GUID                      = 46361B5B-AF17-41FF-95F9-E1BCE08435B9
+  BASE_NAME                      = HackAcpiRestore
+  FILE_GUID                      = f3ba4410-bf89-4169-9dcd-a33cbd10d8e3
   MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
-  ENTRY_POINT                    = AcpiViewAppMain
+  ENTRY_POINT                    = UefiMain
   UEFI_HII_RESOURCE_SECTION      = TRUE
 
 [Sources.common]
-  AcpiViewApp.c
-  AcpiViewApp.uni
+  HackAcpiRestore.c
 
 [Packages]
   MdeModulePkg/MdeModulePkg.dec
@@ -27,8 +26,9 @@
   ShellPkg/ShellPkg.dec
 
 [LibraryClasses]
+  BaseMemoryLib
   UefiBootServicesTableLib
+  MemoryAllocationLib
   UefiLib
-  BaseLib
+  UefiRuntimeServicesTableLib
   UefiApplicationEntryPoint
-  AcpiViewCommandLib
