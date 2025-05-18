@@ -136,7 +136,7 @@
   ShellPkg/Application/ShellSortTestApp/ShellSortTestApp.inf
   ShellPkg/Application/PrintAcpi/PrintAcpi.inf
   ShellPkg/Application/HackAcpi/HackAcpi.inf
-  ShellPkg/Application/HackAcpi/HackAcpiRestore.inf
+  ShellPkg/Application/HackAcpiRestore/HackAcpiRestore.inf
 
   ShellPkg/DynamicCommand/TftpDynamicCommand/TftpDynamicCommand.inf {
     <PcdsFixedAtBuild>
