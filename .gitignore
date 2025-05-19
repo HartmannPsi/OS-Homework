@@ -42,6 +42,14 @@ edk2/**
 !linux-5.19.17/net/
 !linux-5.19.17/net/socket.c
 
+!linux-5.19.17/mm/
+!linux-5.19.17/mm/memory.c
+!linux-5.19.17/mm/page_io.c
+
+!linux-5.19.17/drivers/
+!linux-5.19.17/drivers/rdma/
+
+
 memPkg/mem_page_modify.c
 
 compile_edk.sh
