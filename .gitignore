@@ -17,6 +17,10 @@ edk2/**
 !linux-5.19.17/drivers/rdma/rdma_swap/
 !linux-5.19.17/drivers/rdma/rdma_swap/rdma_core.c
 
+!linux-5.19.17/drivers/acpi/
+!linux-5.19.17/drivers/acpi/Makefile
+!linux-5.19.17/drivers/acpi/Kconfig
+
 !linux-5.19.17/include/
 !linux-5.19.17/include/linux/
 !linux-5.19.17/include/linux/syscalls.h
