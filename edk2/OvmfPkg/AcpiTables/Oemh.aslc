@@ -1,0 +1,30 @@
+// edk2/OvmfPkg/AcpiTables/Oemh.aslc
+#include <IndustryStandard/Acpi.h>
+
+#define SIGNATURE  SIGNATURE_32('O', 'E', 'M', 'H')
+
+#pragma pack(1)
+typedef struct {
+  EFI_ACPI_DESCRIPTION_HEADER Header;
+  UINT64 CpuFrequencyHz;
+  UINT64 MemorySizeMB;
+  UINT8  GpuCount;
+} OEMH_TABLE;
+#pragma pack()
+
+OEMH_TABLE Oemh = {
+  {
+    SIGNATURE,
+    sizeof(OEMH_TABLE),
+    1,                          // Revision
+    0,                          // Checksum, filled by BIOS
+    {'O','P','E','N','A','I',' ',' '}, // OEMID
+    {'H','W','I','N','F','O'},          // OEM Table ID
+    1,                          // OEM Revision
+    0x12345678,                 // Creator ID
+    1                           // Creator Revision
+  },
+  2800000000ULL,  // CpuFrequencyHz (e.g. 2.8GHz)
+  16384,          // MemorySizeMB (e.g. 16GB)
+  1               // GpuCount
+};
