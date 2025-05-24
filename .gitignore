@@ -8,17 +8,29 @@ edk2/**
 !edk2/ShellPkg/
 !edk2/ShellPkg/ShellPkg.dsc
 
+!edk2/OvmfPkg/
+!edk2/OvmfPkg/OvmfPkgX64.dsc
+!edk2/OvmfPkg/OvmfPkgX64.fdf
+
+!linux-5.19.17/drivers/
+!linux-5.19.17/drivers/rdma/
+!linux-5.19.17/drivers/rdma/rdma_swap/
+!linux-5.19.17/drivers/rdma/rdma_swap/rdma_core.c
+
 !linux-5.19.17/include/
 !linux-5.19.17/include/linux/
 !linux-5.19.17/include/linux/syscalls.h
 !linux-5.19.17/include/linux/sched.h
 !linux-5.19.17/include/linux/kv_pair.h
 !linux-5.19.17/include/linux/vgettask.h
+!linux-5.19.17/include/linux/rdma_swap.h
+!linux-5.19.17/include/linux/rdma_core.h
 
 !linux-5.19.17/kernel/
 !linux-5.19.17/kernel/fork.c
 !linux-5.19.17/kernel/sys.c
 !linux-5.19.17/kernel/exit.c
+!linux-5.19.17/kernel/rdma_swap_ctrl.c
 !linux-5.19.17/kernel/sched/
 !linux-5.19.17/kernel/sched/core.c
 
