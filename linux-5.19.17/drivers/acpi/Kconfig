@@ -604,3 +604,10 @@ config ACPI_PRMT
 	  While this feature is optional in principle, leaving it out may
 	  substantially increase computational overhead related to the
 	  initialization of some server systems.
+
+config ACPI_OEMH
+    tristate "ACPI OEMH hardware info export"
+    depends on ACPI
+    default y
+    help
+      Export runtime hardware info passed via ACPI OEMH table to sysfs.

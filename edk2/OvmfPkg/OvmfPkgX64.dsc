@@ -709,6 +709,7 @@
 ################################################################################
 [Components]
   OvmfPkg/ResetVector/ResetVector.inf
+  OvmfPkg/AcpiTables/AcpiTables.inf
 
   #
   # SEC Phase modules

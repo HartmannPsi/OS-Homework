@@ -403,6 +403,8 @@ INF  MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
 INF OvmfPkg/Tcg/TdTcg2Dxe/TdTcg2Dxe.inf
 !endif
 
+INF  OvmfPkg/AcpiTables/AcpiTables.inf
+
 #
 # TPM support
 #
