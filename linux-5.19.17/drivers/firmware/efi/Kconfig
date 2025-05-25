@@ -323,3 +323,8 @@ config UEFI_CPER_X86
 	bool
 	depends on UEFI_CPER && X86
 	default y
+config RUNTIME_INFO
+    tristate "UEFI OEMH Runtime Info Support"
+    depends on EFI
+    help
+      Parses a custom ACPI table and exports UEFI runtime info to sysfs.
