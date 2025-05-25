@@ -18,7 +18,7 @@ OEMH_TABLE Oemh = {
     sizeof(OEMH_TABLE),
     1,                          // Revision
     0,                          // Checksum, filled by BIOS
-    {'O','P','E','N','A','I',' ',' '}, // OEMID
+    {'P','S','Y','C','H','O',' ',' '}, // OEMID
     {'H','W','I','N','F','O'},          // OEM Table ID
     1,                          // OEM Revision
     0x12345678,                 // Creator ID
