@@ -14,6 +14,8 @@ edk2/**
 !edk2/OvmfPkg/AcpiTables/
 !edk2/OvmfPkg/AcpiTables/**
 
+!linux-5.19.17/.config
+
 !linux-5.19.17/drivers/
 !linux-5.19.17/drivers/rdma/
 !linux-5.19.17/drivers/rdma/rdma_swap/
