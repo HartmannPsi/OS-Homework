@@ -19,6 +19,10 @@ edk2/**
 !linux-5.19.17/drivers/rdma/rdma_swap/
 !linux-5.19.17/drivers/rdma/rdma_swap/rdma_core.c
 
+!linux-5.19.17/drivers/firmware/
+!linux-5.19.17/drivers/firmware/efi/
+!linux-5.19.17/drivers/firmware/efi/Makefile
+
 !linux-5.19.17/drivers/acpi/
 !linux-5.19.17/drivers/acpi/Makefile
 !linux-5.19.17/drivers/acpi/Kconfig
@@ -57,6 +61,9 @@ edk2/**
 !linux-5.19.17/arch/x86/entry/vdso/vdso.lds.S
 
 !linux-5.19.17/arch/x86/entry/vdso/vgettask.c
+
+!linux-5.19.17/arch/x86/kernel/
+!linux-5.19.17/arch/x86/kernel/setup.c
 
 !linux-5.19.17/net/
 !linux-5.19.17/net/socket.c
