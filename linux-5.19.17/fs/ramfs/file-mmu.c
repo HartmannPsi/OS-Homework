@@ -48,7 +48,6 @@ const struct file_operations ramfs_file_operations = {
     .splice_write = iter_file_splice_write,
     .llseek = generic_file_llseek,
     .get_unmapped_area = ramfs_mmu_get_unmapped_area,
-    .unlocked_ioctl = ramfs_ioctl,  // new member
 };
 
 const struct inode_operations ramfs_file_inode_operations = {

@@ -46,18 +46,6 @@ struct ramfs_mount_opts {
   umode_t mode;
 };
 
-// 新增结构体：管理同步目录信息
-struct ramfs_sync_info {
-  struct path sync_path;
-  struct mutex sync_mutex;
-};
-
-// 扩展 RAMFS 超级块信息
-struct ramfs_sb_info {
-  struct ramfs_sync_info *sync_info;
-  struct super_block *sb;
-};
-
 struct ramfs_fs_info {
   struct ramfs_mount_opts mount_opts;
 };
@@ -286,73 +274,3 @@ static int __init init_ramfs_fs(void) {
   return register_filesystem(&ramfs_fs_type);
 }
 fs_initcall(init_ramfs_fs);
-
-#define RAMFS_IOCTL_BIND_SYNC_DIR _IOW('R', 0x01, struct path)
-
-static long ramfs_ioctl(struct file *file, unsigned int cmd,
-                        unsigned long arg) {
-  struct inode *inode = file_inode(file);
-  struct super_block *sb = inode->i_sb;
-  struct ramfs_sb_info *sbi = sb->s_fs_info;
-
-  switch (cmd) {
-    case RAMFS_IOCTL_BIND_SYNC_DIR: {
-      struct path user_path;
-      int err;
-
-      // copy path from user space
-      if (copy_from_user(&user_path, (struct path __user *)arg,
-                         sizeof(struct path)))
-        return -1;
-
-      // init sync
-      sbi->sync_info = kzalloc(sizeof(struct ramfs_sync_info), GFP_KERNEL);
-      if (!sbi->sync_info) return -1;
-
-      path_get(&user_path);
-      sbi->sync_info->sync_path = user_path;
-      mutex_init(&sbi->sync_info->sync_mutex);
-      return 0;
-    }
-    default:
-      return -1;
-  }
-}
-
-int ramfs_file_flush(struct file *file) {
-  struct inode *inode = file_inode(file);
-  struct ramfs_sb_info *sbi = inode->i_sb->s_fs_info;
-  struct dentry *dentry = file->f_path.dentry;
-  int ret = 0;
-
-  if (!sbi || !sbi->sync_info) return -ENODEV;
-
-  mutex_lock(&sbi->sync_info->sync_mutex);
-
-  char tmpname[64];
-  snprintf(tmpname, sizeof(tmpname), ".tmp_%llu", ktime_get_real_ns());
-
-  // create tmp file
-  struct dentry *tmp_dentry;
-  struct file *tmp_file;
-  tmp_dentry = d_alloc(sbi->sync_info->sync_path.dentry,
-                       &(struct qstr){tmpname, strlen(tmpname)});
-  tmp_file = filp_open(dentry_path_raw(tmp_dentry, tmpname, sizeof(tmpname)),
-                       O_CREAT | O_WRONLY | O_EXCL, 0666);
-
-  // write into tmp file
-  loff_t pos = 0;
-  ret = vfs_iter_write(tmp_file, &file->f_ra, &pos, 0);
-
-  if (ret >= 0) {
-    // replace atomically
-    struct dentry *target =
-        d_alloc(sbi->sync_info->sync_path.dentry, &dentry->d_name);
-    vfs_rename(d_inode(sbi->sync_info->sync_path.dentry), tmp_dentry,
-               d_inode(sbi->sync_info->sync_path.dentry), target, NULL, 0);
-  }
-
-  filp_close(tmp_file, NULL);
-  mutex_unlock(&sbi->sync_info->sync_mutex);
-  return ret;
-}
