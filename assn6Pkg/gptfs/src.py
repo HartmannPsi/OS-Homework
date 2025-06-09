@@ -96,9 +96,23 @@ class GPTfs(LoggingMixIn, Operations):
 
 if __name__ == '__main__':
     import sys
+    import subprocess
+
     if len(sys.argv) != 2:
         print("Usage: python3 gptfs.py <mountpoint>")
         sys.exit(1)
 
     mountpoint = sys.argv[1]
-    FUSE(GPTfs(), mountpoint, foreground=True, allow_other=True)
+
+    try:
+        print(f"Mounting GPTfs at {mountpoint}. Press Ctrl+C to exit.")
+        FUSE(GPTfs(), mountpoint, foreground=True, allow_other=True)
+    except KeyboardInterrupt:
+        print("\nReceived Ctrl+C, attempting to unmount...")
+    finally:
+        try:
+            subprocess.run(["fusermount", "-u", mountpoint], check=True)
+            print(f"Unmounted {mountpoint}")
+        except subprocess.CalledProcessError:
+            print(f"Failed to unmount {mountpoint} — it may already be unmounted or not mounted correctly.")
+
