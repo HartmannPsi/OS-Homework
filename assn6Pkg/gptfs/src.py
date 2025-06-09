@@ -7,7 +7,7 @@ from fuse import FUSE, Operations, LoggingMixIn
 
 # 模拟 GPT 服务（可改为调用 OpenAI API）
 def simulate_gpt_response(prompt):
-    return f"Echo: {prompt.strip()}"
+    return f"Echo: {prompt.strip()}\n"
 
 class GPTfs(LoggingMixIn, Operations):
     def __init__(self):
@@ -101,4 +101,4 @@ if __name__ == '__main__':
         sys.exit(1)
 
     mountpoint = sys.argv[1]
-    FUSE(GPTfs(), mountpoint, foreground=True)
+    FUSE(GPTfs(), mountpoint, foreground=True, allow_other=True)
