@@ -1,2 +1,1 @@
-mkdir /mnt/ramfs
-sudo python3 launcher.py /mnt/ramfs
+sudo PYTHONPATH=$(python -c "import site; print(site.getsitepackages()[0])") python3 launcher.py /mnt/ramfs

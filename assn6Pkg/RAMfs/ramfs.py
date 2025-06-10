@@ -22,35 +22,21 @@ class RAMFS(LoggingMixIn, Operations):
         self.fd = 0
         self.inode_count = 2  # next inode id
 
-    def _get_inode_by_path(self, path):
-        return self.path_map.get(path)
+def _get_inode_by_path(self, path):
+    return self.path_map.get(path)
 
-    def _new_inode(self, mode):
-        inode = self.inode_count
-        self.inode_count += 1
-        self.inodes[inode] = {
-            'mode': mode,
-            'nlink': 1,
-            'size': 0,
-            'ctime': time.time(),
-            'mtime': time.time(),
-            'atime': time.time(),
-        }
-        if stat.S_ISDIR(mode):
-            self.inodes[inode]['nlink'] = 2
-            self.inodes[inode]['children'] = {}
-            self.data[inode] = None
-        else:
-            self.data[inode] = bytearray()
-        return inode
+def _log_error(self, name, path, error):
+    print(f"[{name}][ERROR] path={path}: {error}")
 
-    def getattr(self, path, fh=None):
-        with self.lock:
+def getattr(self, path, fh=None):
+    with self.lock:
+        try:
+            print(f"[getattr] {path}")
             inode = self._get_inode_by_path(path)
             if inode is None:
                 raise FuseOSError(errno.ENOENT)
             entry = self.inodes[inode]
-            attr = {
+            return {
                 'st_mode': entry['mode'],
                 'st_nlink': entry['nlink'],
                 'st_size': entry['size'],
@@ -58,39 +44,81 @@ class RAMFS(LoggingMixIn, Operations):
                 'st_mtime': entry['mtime'],
                 'st_atime': entry['atime']
             }
-            return attr
+        except Exception as e:
+            self._log_error("getattr", path, e)
+            raise FuseOSError(errno.EIO)
 
-    def readdir(self, path, fh):
-        with self.lock:
+def readdir(self, path, fh):
+    with self.lock:
+        try:
+            print(f"[readdir] {path}")
             inode = self._get_inode_by_path(path)
             if inode is None:
                 raise FuseOSError(errno.ENOENT)
             yield '.'
             yield '..'
-            for name in self.inodes[inode].get('children', {}):
+            for name in self.inodes[inode]['children']:
                 yield name
+        except Exception as e:
+            self._log_error("readdir", path, e)
+            raise FuseOSError(errno.EIO)
 
-    def mknod(self, path, mode, dev):
-        with self.lock:
+def mknod(self, path, mode, dev):
+    with self.lock:
+        try:
+            print(f"[mknod] {path}")
             if path in self.path_map:
                 raise FuseOSError(errno.EEXIST)
             parent_path, name = os.path.split(path)
             parent_inode = self._get_inode_by_path(parent_path)
             if parent_inode is None:
                 raise FuseOSError(errno.ENOENT)
-            inode = self._new_inode(mode)
+            inode = self.inode_count
+            self.inode_count += 1
+            self.inodes[inode] = {
+                'mode': mode,
+                'nlink': 1,
+                'size': 0,
+                'ctime': time.time(),
+                'mtime': time.time(),
+                'atime': time.time()
+            }
+            self.data[inode] = bytearray()
             self.inodes[parent_inode]['children'][name] = inode
             self.path_map[path] = inode
+        except Exception as e:
+            self._log_error("mknod", path, e)
+            raise FuseOSError(errno.EIO)
 
-    def mkdir(self, path, mode):
-        with self.lock:
+def create(self, path, mode, fi=None):
+    with self.lock:
+        try:
+            print(f"[create] {path}")
+            self.mknod(path, mode, 0)
+            self.fd += 1
+            return self.fd
+        except Exception as e:
+            self._log_error("create", path, e)
+            raise FuseOSError(errno.EIO)
+
+def mkdir(self, path, mode):
+    with self.lock:
+        try:
+            print(f"[mkdir] {path}")
             self.mknod(path, stat.S_IFDIR | mode, 0)
             parent_path = os.path.dirname(path)
             parent_inode = self._get_inode_by_path(parent_path)
             self.inodes[parent_inode]['nlink'] += 1
+            self.data[self.path_map[path]] = None
+            self.inodes[self.path_map[path]]['children'] = {}
+        except Exception as e:
+            self._log_error("mkdir", path, e)
+            raise FuseOSError(errno.EIO)
 
-    def unlink(self, path):
-        with self.lock:
+def unlink(self, path):
+    with self.lock:
+        try:
+            print(f"[unlink] {path}")
             inode = self._get_inode_by_path(path)
             if inode is None:
                 raise FuseOSError(errno.ENOENT)
@@ -102,9 +130,14 @@ class RAMFS(LoggingMixIn, Operations):
                 del self.inodes[inode]
                 del self.data[inode]
             del self.path_map[path]
+        except Exception as e:
+            self._log_error("unlink", path, e)
+            raise FuseOSError(errno.EIO)
 
-    def rmdir(self, path):
-        with self.lock:
+def rmdir(self, path):
+    with self.lock:
+        try:
+            print(f"[rmdir] {path}")
             inode = self._get_inode_by_path(path)
             if inode is None or not stat.S_ISDIR(self.inodes[inode]['mode']):
                 raise FuseOSError(errno.ENOTDIR)
@@ -118,9 +151,14 @@ class RAMFS(LoggingMixIn, Operations):
             del self.inodes[inode]
             del self.data[inode]
             del self.path_map[path]
+        except Exception as e:
+            self._log_error("rmdir", path, e)
+            raise FuseOSError(errno.EIO)
 
-    def rename(self, old, new):
-        with self.lock:
+def rename(self, old, new):
+    with self.lock:
+        try:
+            print(f"[rename] {old} -> {new}")
             old_inode = self._get_inode_by_path(old)
             if old_inode is None:
                 raise FuseOSError(errno.ENOENT)
@@ -134,9 +172,14 @@ class RAMFS(LoggingMixIn, Operations):
             del self.inodes[old_parent_inode]['children'][old_name]
             del self.path_map[old]
             self.path_map[new] = old_inode
+        except Exception as e:
+            self._log_error("rename", old, e)
+            raise FuseOSError(errno.EIO)
 
-    def link(self, target, name):
-        with self.lock:
+def link(self, target, name):
+    with self.lock:
+        try:
+            print(f"[link] target: {target}, name: {name}")
             target_inode = self._get_inode_by_path(target)
             if target_inode is None:
                 raise FuseOSError(errno.ENOENT)
@@ -145,22 +188,42 @@ class RAMFS(LoggingMixIn, Operations):
             self.inodes[parent_inode]['children'][fname] = target_inode
             self.inodes[target_inode]['nlink'] += 1
             self.path_map[name] = target_inode
+        except Exception as e:
+            self._log_error("link", name, e)
+            raise FuseOSError(errno.EIO)
 
-    def open(self, path, flags):
-        with self.lock:
-            if self._get_inode_by_path(path) is None:
+def open(self, path, flags):
+    with self.lock:
+        try:
+            print(f"[open] {path}")
+            inode = self._get_inode_by_path(path)
+            if inode is None:
                 raise FuseOSError(errno.ENOENT)
             self.fd += 1
             return self.fd
+        except Exception as e:
+            self._log_error("open", path, e)
+            raise FuseOSError(errno.EIO)
 
-    def read(self, path, size, offset, fh):
-        with self.lock:
+def read(self, path, size, offset, fh):
+    with self.lock:
+        try:
+            print(f"[read] {path}, offset={offset}, size={size}")
             inode = self._get_inode_by_path(path)
+            if inode is None:
+                raise FuseOSError(errno.ENOENT)
             return self.data[inode][offset:offset + size]
+        except Exception as e:
+            self._log_error("read", path, e)
+            raise FuseOSError(errno.EIO)
 
-    def write(self, path, data, offset, fh):
-        with self.lock:
+def write(self, path, data, offset, fh):
+    with self.lock:
+        try:
+            print(f"[write] {path}, offset={offset}, len(data)={len(data)}")
             inode = self._get_inode_by_path(path)
+            if inode is None:
+                raise FuseOSError(errno.ENOENT)
             buf = self.data[inode]
             new_len = offset + len(data)
             if len(buf) < new_len:
@@ -168,16 +231,26 @@ class RAMFS(LoggingMixIn, Operations):
             buf[offset:offset + len(data)] = data
             self.inodes[inode]['size'] = len(buf)
             return len(data)
+        except Exception as e:
+            self._log_error("write", path, e)
+            raise FuseOSError(errno.EIO)
 
-    def truncate(self, path, length, fh=None):
-        with self.lock:
+def truncate(self, path, length, fh=None):
+    with self.lock:
+        try:
+            print(f"[truncate] {path}, length={length}")
             inode = self._get_inode_by_path(path)
+            if inode is None:
+                raise FuseOSError(errno.ENOENT)
             buf = self.data[inode]
             if length < len(buf):
                 self.data[inode] = buf[:length]
             else:
                 buf.extend(b'\x00' * (length - len(buf)))
             self.inodes[inode]['size'] = length
+        except Exception as e:
+            self._log_error("truncate", path, e)
+            raise FuseOSError(errno.EIO)
 
 if __name__ == '__main__':
     import sys
