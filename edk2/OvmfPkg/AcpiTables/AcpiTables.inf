@@ -2,9 +2,10 @@
   INF_VERSION                    = 0x00010006
   BASE_NAME                      = AcpiTables
   FILE_GUID                      = f53c9ead-79ba-4beb-b8d1-371e010aaa01
-  MODULE_TYPE                    = USER_DEFINED
+  MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   PCD_IS_DRIVER                  = FALSE
+
 
 [Sources]
   Oemh.aslc
@@ -14,7 +15,11 @@
   UefiCpuPkg/UefiCpuPkg.dec
 
 [LibraryClasses]
-  UefiLib
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  DebugLib
 
 [BuildOptions]
-  IASL_FLAGS = -vs
+  DEBUG_GCC5_X64_IASL_FLAGS   = -vs
+  RELEASE_GCC5_X64_IASL_FLAGS = -vs
