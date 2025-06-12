@@ -14,10 +14,10 @@
 static struct kobject *runtime_info_kobj;
 static char runtime_info_buf[128];  // 存放 sysfs 输出内容
 
-// 示例 OEMH 表结构定义（你可以根据实际结构调整）
+// OEMH 表结构定义
 struct acpi_table_oemh {
   struct acpi_table_header header;
-  u32 runtime_value;  // 假设这是你要导出的字段
+  u32 runtime_value;  // 导出字段
 };
 
 // 从 OEMH 表解析数据，保存到 runtime_info_buf

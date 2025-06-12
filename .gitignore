@@ -25,6 +25,7 @@ edk2/**
 !linux-5.19.17/drivers/firmware/efi/
 !linux-5.19.17/drivers/firmware/efi/Makefile
 !linux-5.19.17/drivers/firmware/efi/Kconfig
+!linux-5.19.17/drivers/firmware/efi/oemh_table.c
 
 !linux-5.19.17/drivers/acpi/
 !linux-5.19.17/drivers/acpi/Makefile
