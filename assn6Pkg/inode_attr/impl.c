@@ -10,14 +10,6 @@
 #include <sys/xattr.h>
 #include <unistd.h>
 
-// 包装系统调用（如 impl.h 中已定义）
-// int set_xattr(...) => syscall(SET_XATTR, ...)
-// int get_xattr(...) => syscall(READ_KV_SYSCALL, ...)
-// int remove_xattr(...) => syscall(REMOVE_XATTR, ...)
-
-// ------------------------------
-// 获取 inode 信息
-// ------------------------------
 void get_inode_info(const char *path) {
   struct stat st;
   if (stat(path, &st) == -1) {
@@ -38,9 +30,6 @@ void get_inode_info(const char *path) {
   printf("Last status change: %ld\n", st.st_ctime);
 }
 
-// ------------------------------
-// 获取扩展属性并返回字符串指针
-// ------------------------------
 char *get_xattr(const char *path, const char *name) {
   char buf[1024] = {0};
   ssize_t ret = getxattr(path, name, buf, sizeof(buf));
@@ -50,7 +39,6 @@ char *get_xattr(const char *path, const char *name) {
     return NULL;
   }
 
-  // 分配并复制到堆上（test.c 会 free）
   char *result = (char *)malloc(ret + 1);
   if (!result) return NULL;
   strcpy(result, buf);
@@ -66,17 +54,6 @@ int remove_xattr(const char *path, const char *name) {
   return removexattr(path, name) == 0 ? 1 : -1;
 }
 
-// int set_xattr(const char *path, const char *name, const char *value) {
-//   return syscall(SET_XATTR, path, name, value);
-// };
-
-// int remove_xattr(const char *path, const char *name) {
-//   return syscall(REMOVE_XATTR, path, name);
-// };
-
-// ------------------------------
-// 列出所有扩展属性
-// ------------------------------
 void list_xattrs(const char *path) {
   ssize_t len = listxattr(path, NULL, 0);
   if (len == -1) {
@@ -102,7 +79,6 @@ void list_xattrs(const char *path) {
     return;
   }
 
-  // 输出每个属性名
   for (char *p = list; p < list + len;) {
     printf("xattr: %s\n", p);
     p += strlen(p) + 1;

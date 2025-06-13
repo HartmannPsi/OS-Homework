@@ -25,7 +25,6 @@ void* mmap_remap(void* addr, size_t size) {
     return NULL;
   }
 
-  // 新建一块相同大小的匿名映射
   void* new_addr = mmap(NULL, size, PROT_READ | PROT_WRITE,
                         MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
@@ -34,7 +33,6 @@ void* mmap_remap(void* addr, size_t size) {
     return NULL;
   }
 
-  // 将原内存内容复制到新映射区域
   memcpy(new_addr, addr, size);
 
   return new_addr;
@@ -60,14 +58,12 @@ int file_mmap_write(const char* filename, size_t offset, char* content) {
   size_t content_len = strlen(content);
   size_t write_end = offset + content_len;
 
-  // 打开文件（读写），若不存在则创建
   int fd = open(filename, O_RDWR | O_CREAT, 0644);
   if (fd < 0) {
     perror("open");
     return -1;
   }
 
-  // 获取当前文件大小
   struct stat st;
   if (fstat(fd, &st) < 0) {
     perror("fstat");
@@ -77,7 +73,6 @@ int file_mmap_write(const char* filename, size_t offset, char* content) {
 
   size_t file_size = st.st_size;
 
-  // 如果写入超出文件末尾，扩展文件大小
   if (write_end > file_size) {
     if (ftruncate(fd, write_end) < 0) {
       perror("ftruncate");
@@ -86,7 +81,6 @@ int file_mmap_write(const char* filename, size_t offset, char* content) {
     }
   }
 
-  // 使用 mmap 映射文件（可读写，私有映射）
   void* map = mmap(NULL, write_end, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
   if (map == MAP_FAILED) {
@@ -95,10 +89,8 @@ int file_mmap_write(const char* filename, size_t offset, char* content) {
     return -1;
   }
 
-  // 写入数据到映射内存
   memcpy((char*)map + offset, content, content_len);
 
-  // 使用 msync 将内存内容刷新回磁盘
   if (msync(map, write_end, MS_SYNC) < 0) {
     perror("msync");
     munmap(map, write_end);
@@ -106,7 +98,6 @@ int file_mmap_write(const char* filename, size_t offset, char* content) {
     return -1;
   }
 
-  // 释放映射和文件描述符
   munmap(map, write_end);
   close(fd);
 

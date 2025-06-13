@@ -1403,7 +1403,7 @@ int __sock_create(struct net *net, int family, int type, int protocol,
       current->socket_count >= current->socket_limit) {
     pr_warn("Thread %d exceeded socket limit (%d)\n", current->pid,
             current->socket_limit);
-    return -EMFILE;  // Too many open files（标准错误码）
+    return -EMFILE;
   }
 
   // 合法则递增 socket 计数

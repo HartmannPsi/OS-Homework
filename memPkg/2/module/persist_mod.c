@@ -13,7 +13,6 @@
 
 static char *sync_dir = NULL;
 
-// 内核实现的 flush 逻辑
 static int flush_to_dir(struct file *file) {
   struct file *out;
   char *relpath, *abspath;
@@ -23,7 +22,6 @@ static int flush_to_dir(struct file *file) {
 
   kernel_read(file, 0, buf, size);
 
-  // 生成目标路径
   relpath = dentry_path_raw(file->f_path.dentry, NULL, 0);
   if (IS_ERR(relpath)) return PTR_ERR(relpath);
 
@@ -37,7 +35,6 @@ static int flush_to_dir(struct file *file) {
   kernel_write(out, buf, size, &out->f_pos);
   filp_close(out, NULL);
 
-  // 原子 rename
   vfs_rename_file(tmpfile, abspath);
 
   kfree(tmpfile);
@@ -46,7 +43,6 @@ static int flush_to_dir(struct file *file) {
   return 0;
 }
 
-// 用户态通过 ioctl 触发 flush 或 bind
 static long device_ioctl(struct file *filp, unsigned int cmd,
                          unsigned long arg) {
   if (cmd == RAMFS_BIND_IOCTL) {

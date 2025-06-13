@@ -12,9 +12,8 @@
 #define OEMH_SIG_LEN 4
 
 static struct kobject *runtime_info_kobj;
-static char runtime_info_buf[128];  // 存放 sysfs 输出内容
+static char runtime_info_buf[128];
 
-// OEMH 表结构定义
 struct acpi_table_oemh {
   struct acpi_table_header header;
   u32 runtime_value;  // 导出字段
@@ -39,7 +38,6 @@ static int parse_oemh_table(void) {
   return 0;
 }
 
-// sysfs read 函数
 static ssize_t runtime_info_show(struct kobject *kobj,
                                  struct kobj_attribute *attr, char *buf) {
   return scnprintf(buf, PAGE_SIZE, "%s\n", runtime_info_buf);
@@ -69,7 +67,6 @@ static int __init oemh_init(void) {
   return 0;
 }
 
-// 模块卸载
 static void __exit oemh_exit(void) {
   sysfs_remove_file(runtime_info_kobj, &runtime_info_attr.attr);
   kobject_put(runtime_info_kobj);

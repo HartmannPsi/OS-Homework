@@ -2554,10 +2554,10 @@ SYSCALL_DEFINE1(read_kv, int, k) {
 SYSCALL_DEFINE3(configure_socket_fairness, pid_t, tid, int, max_sock, int,
                 priority) {
   struct task_struct *task = find_task_by_vpid(tid);  // 通过 PID 查找线程结构体
-  if (!task) return -ESRCH;                           // 线程不存在
+  if (!task) return -ESRCH;
 
-  task->socket_limit = max_sock;     // 设置最大 socket 数
-  task->socket_priority = priority;  // 设置优先级
-  task->socket_count = 0;            // 初始化计数器
+  task->socket_limit = max_sock;
+  task->socket_priority = priority;
+  task->socket_count = 0;
   return 0;
 }

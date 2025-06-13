@@ -1,0 +1,1 @@
+sudo PYTHONPATH=$(python -c "import site; print(site.getsitepackages()[0])") python3 ramfs.py /mnt/ramfs /tmp/ramfs-backend

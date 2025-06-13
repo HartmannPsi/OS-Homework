@@ -17,14 +17,14 @@ OEMH_TABLE Oemh = {
     SIGNATURE,
     sizeof(OEMH_TABLE),
     1,                          // Revision
-    0,                          // Checksum, filled by BIOS
+    0,                          // Checksum
     {'P','S','Y','C','H','O',' ',' '}, // OEMID
     {'H','W','I','N','F','O'},          // OEM Table ID
     1,                          // OEM Revision
     0x12345678,                 // Creator ID
     1                           // Creator Revision
   },
-  2800000000ULL,  // CpuFrequencyHz (e.g. 2.8GHz)
-  16384,          // MemorySizeMB (e.g. 16GB)
+  2800000000ULL,  // CpuFrequencyHz
+  16384,          // MemorySizeMB
   1               // GpuCount
 };
