@@ -86,3 +86,6 @@ compile_edk.sh
 test.sh
 error.txt
 uefi/
+assn6Pkg/RAMfs/ramfs_persist/
+assn6Pkg/RAMfs/ramfs/
+assn6Pkg/RAMfs/__pycache__/

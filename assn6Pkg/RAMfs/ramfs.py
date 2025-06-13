@@ -1,269 +1,222 @@
-import os, time, errno, threading
+import os
+import sys
+import errno
+import time
+import threading
+import shutil
 from collections import defaultdict
-from fuse import FUSE, Operations, LoggingMixIn, FuseOSError
-import stat
-import pwd, grp
+from fuse import FUSE, FuseOSError, Operations, LoggingMixIn
+from stat import S_IFDIR, S_IFREG
+from datetime import datetime
+from pathlib import Path
+import logging
 
-class RAMFS(LoggingMixIn, Operations):
-    def __init__(self):
+BLOCK_SIZE = 4096
+
+class Inode:
+    def __init__(self, mode, is_dir=False):
+        self.mode = mode
+        self.atime = self.mtime = self.ctime = time.time()
+        self.size = 0
+        self.nlink = 1
+        self.data = bytearray()
+        self.is_dir = is_dir
+        self.children = {} if is_dir else None
         self.lock = threading.RLock()
-        self.inodes = {}
-        self.data = {}
-        self.path_map = {'/': 1}
-        self.inodes[1] = {
-            'mode': stat.S_IFDIR | 0o777,
-            'nlink': 2,
-            'size': 0,
-            'ctime': time.time(),
-            'mtime': time.time(),
-            'atime': time.time(),
-            'uid': int(os.environ.get("SUDO_UID", os.getuid())),
-            'gid': int(os.environ.get("SUDO_GID", os.getgid())),
-            'children': {}
-        }
-        self.data[1] = None
+
+class RAMfs(LoggingMixIn, Operations):
+    def __init__(self, persist_dir):
+        self.root = Inode(S_IFDIR | 0o755, is_dir=True)
         self.fd = 0
-        self.inode_count = 2  # next inode id
+        self.inodes = {'/': self.root}
+        self.paths = {'/': self.root}
+        self.persist_dir = persist_dir
+        self.global_lock = threading.RLock()
+        logging.basicConfig(level=logging.DEBUG)
 
-def _get_inode_by_path(self, path):
-    return self.path_map.get(path)
+    def _full_path(self, path):
+        return os.path.join(self.persist_dir, path.lstrip('/'))
 
-def _log_error(self, name, path, error):
-    print(f"[{name}][ERROR] path={path}: {error}")
+    def getattr(self, path, fh=None):
+        inode = self.paths.get(path)
+        if not inode:
+            raise FuseOSError(errno.ENOENT)
+        st = {
+            'st_mode': inode.mode,
+            'st_nlink': inode.nlink,
+            'st_size': inode.size,
+            'st_ctime': inode.ctime,
+            'st_mtime': inode.mtime,
+            'st_atime': inode.atime,
+        }
+        return st
 
-def getattr(self, path, fh=None):
-    with self.lock:
-        try:
-            print(f"[getattr] {path}")
-            if path == '/':
-                inode_id = self.inodes[1]
-            else:
-                inode_id = self._get_inode_by_path(path)
-            if inode_id is None:
-                raise FuseOSError(errno.ENOENT)
-            entry = self.inodes[inode_id]
-            print(f"[getattr] path={path}, mode={oct(entry['mode'])}, uid={entry.get('uid')}, gid={entry.get('gid')}")
-            return {
-                'st_mode': entry['mode'],
-                'st_nlink': entry['nlink'],
-                'st_size': entry['size'],
-                'st_ctime': entry['ctime'],
-                'st_mtime': entry['mtime'],
-                'st_atime': entry['atime'],
-                'st_uid': entry.get('uid', os.getuid()),
-                'st_gid': entry.get('gid', os.getgid()),
-            }
-        except Exception as e:
-            self._log_error("getattr", path, e)
-            raise FuseOSError(errno.EIO)
+    def readdir(self, path, fh):
+        inode = self.paths.get(path)
+        if not inode or not inode.is_dir:
+            raise FuseOSError(errno.ENOTDIR)
+        with inode.lock:
+            return ['.', '..'] + list(inode.children.keys())
 
-def readdir(self, path, fh):
-    with self.lock:
-        try:
-            print(f"[readdir] {path}")
-            inode = self._get_inode_by_path(path)
-            if inode is None:
-                raise FuseOSError(errno.ENOENT)
-            yield '.'
-            yield '..'
-            for name in self.inodes[inode]['children']:
-                yield name
-        except Exception as e:
-            self._log_error("readdir", path, e)
-            raise FuseOSError(errno.EIO)
-
-def mknod(self, path, mode, dev):
-    with self.lock:
-        try:
-            print(f"[mknod] {path}")
-            if path in self.path_map:
-                raise FuseOSError(errno.EEXIST)
-            parent_path, name = os.path.split(path)
-            parent_inode = self._get_inode_by_path(parent_path)
-            if parent_inode is None:
-                raise FuseOSError(errno.ENOENT)
-            inode = self.inode_count
-            self.inode_count += 1
-            self.inodes[inode] = {
-                'mode': mode,
-                'nlink': 1,
-                'size': 0,
-                'ctime': time.time(),
-                'mtime': time.time(),
-                'atime': time.time()
-            }
-            self.data[inode] = bytearray()
-            self.inodes[parent_inode]['children'][name] = inode
-            self.path_map[path] = inode
-        except Exception as e:
-            self._log_error("mknod", path, e)
-            raise FuseOSError(errno.EIO)
-
-def create(self, path, mode, fi=None):
-    with self.lock:
-        try:
-            print(f"[create] {path}")
-            self.mknod(path, mode, 0)
-            self.fd += 1
-            return self.fd
-        except Exception as e:
-            self._log_error("create", path, e)
-            raise FuseOSError(errno.EIO)
-
-def mkdir(self, path, mode):
-    with self.lock:
-        try:
-            print(f"[mkdir] {path}")
-            self.mknod(path, stat.S_IFDIR | mode, 0)
-            parent_path = os.path.dirname(path)
-            parent_inode = self._get_inode_by_path(parent_path)
-            self.inodes[parent_inode]['nlink'] += 1
-            self.data[self.path_map[path]] = None
-            self.inodes[self.path_map[path]]['children'] = {}
-        except Exception as e:
-            self._log_error("mkdir", path, e)
-            raise FuseOSError(errno.EIO)
-
-def unlink(self, path):
-    with self.lock:
-        try:
-            print(f"[unlink] {path}")
-            inode = self._get_inode_by_path(path)
-            if inode is None:
-                raise FuseOSError(errno.ENOENT)
-            parent_path, name = os.path.split(path)
-            parent_inode = self._get_inode_by_path(parent_path)
-            del self.inodes[parent_inode]['children'][name]
-            self.inodes[inode]['nlink'] -= 1
-            if self.inodes[inode]['nlink'] == 0:
-                del self.inodes[inode]
-                del self.data[inode]
-            del self.path_map[path]
-        except Exception as e:
-            self._log_error("unlink", path, e)
-            raise FuseOSError(errno.EIO)
-
-def rmdir(self, path):
-    with self.lock:
-        try:
-            print(f"[rmdir] {path}")
-            inode = self._get_inode_by_path(path)
-            if inode is None or not stat.S_ISDIR(self.inodes[inode]['mode']):
-                raise FuseOSError(errno.ENOTDIR)
-            if self.inodes[inode]['children']:
-                raise FuseOSError(errno.ENOTEMPTY)
-            parent_path = os.path.dirname(path)
-            parent_inode = self._get_inode_by_path(parent_path)
+    def mkdir(self, path, mode):
+        with self.global_lock:
+            parent = self._get_parent(path)
             name = os.path.basename(path)
-            del self.inodes[parent_inode]['children'][name]
-            self.inodes[parent_inode]['nlink'] -= 1
-            del self.inodes[inode]
-            del self.data[inode]
-            del self.path_map[path]
-        except Exception as e:
-            self._log_error("rmdir", path, e)
-            raise FuseOSError(errno.EIO)
+            if name in parent.children:
+                raise FuseOSError(errno.EEXIST)
+            node = Inode(S_IFDIR | mode, is_dir=True)
+            parent.children[name] = node
+            self.paths[path] = node
+            return 0
 
-def rename(self, old, new):
-    with self.lock:
-        try:
-            print(f"[rename] {old} -> {new}")
-            old_inode = self._get_inode_by_path(old)
-            if old_inode is None:
-                raise FuseOSError(errno.ENOENT)
-            old_parent = os.path.dirname(old)
-            new_parent = os.path.dirname(new)
-            old_name = os.path.basename(old)
-            new_name = os.path.basename(new)
-            old_parent_inode = self._get_inode_by_path(old_parent)
-            new_parent_inode = self._get_inode_by_path(new_parent)
-            self.inodes[new_parent_inode]['children'][new_name] = old_inode
-            del self.inodes[old_parent_inode]['children'][old_name]
-            del self.path_map[old]
-            self.path_map[new] = old_inode
-        except Exception as e:
-            self._log_error("rename", old, e)
-            raise FuseOSError(errno.EIO)
+    def mknod(self, path, mode, dev):
+        with self.global_lock:
+            parent = self._get_parent(path)
+            name = os.path.basename(path)
+            if name in parent.children:
+                raise FuseOSError(errno.EEXIST)
+            node = Inode(S_IFREG | mode)
+            parent.children[name] = node
+            self.paths[path] = node
+            return 0
+        
+    def create(self, path, mode, fi=None):
+        return self.mknod(path, mode, 0)
 
-def link(self, target, name):
-    with self.lock:
-        try:
-            print(f"[link] target: {target}, name: {name}")
-            target_inode = self._get_inode_by_path(target)
-            if target_inode is None:
+    def unlink(self, path):
+        with self.global_lock:
+            parent = self._get_parent(path)
+            name = os.path.basename(path)
+            if name not in parent.children:
                 raise FuseOSError(errno.ENOENT)
-            parent_path, fname = os.path.split(name)
-            parent_inode = self._get_inode_by_path(parent_path)
-            self.inodes[parent_inode]['children'][fname] = target_inode
-            self.inodes[target_inode]['nlink'] += 1
-            self.path_map[name] = target_inode
-        except Exception as e:
-            self._log_error("link", name, e)
-            raise FuseOSError(errno.EIO)
+            node = parent.children[name]
+            node.nlink -= 1
+            if node.nlink == 0:
+                del self.paths[path]
+            del parent.children[name]
 
-def open(self, path, flags):
-    with self.lock:
-        try:
-            print(f"[open] {path}")
-            inode = self._get_inode_by_path(path)
-            if inode is None:
-                raise FuseOSError(errno.ENOENT)
-            self.fd += 1
-            return self.fd
-        except Exception as e:
-            self._log_error("open", path, e)
-            raise FuseOSError(errno.EIO)
+    def rmdir(self, path):
+        inode = self.paths.get(path)
+        if not inode or not inode.is_dir:
+            raise FuseOSError(errno.ENOTDIR)
+        if inode.children:
+            raise FuseOSError(errno.ENOTEMPTY)
+        parent = self._get_parent(path)
+        name = os.path.basename(path)
+        del parent.children[name]
+        del self.paths[path]
 
-def read(self, path, size, offset, fh):
-    with self.lock:
-        try:
-            print(f"[read] {path}, offset={offset}, size={size}")
-            inode = self._get_inode_by_path(path)
-            if inode is None:
-                raise FuseOSError(errno.ENOENT)
-            return self.data[inode][offset:offset + size]
-        except Exception as e:
-            self._log_error("read", path, e)
-            raise FuseOSError(errno.EIO)
+    def rename(self, old, new):
+        with self.global_lock:
+            old_parent = self._get_parent(old)
+            new_parent = self._get_parent(new)
+            name_old = os.path.basename(old)
+            name_new = os.path.basename(new)
+            node = old_parent.children.pop(name_old)
+            new_parent.children[name_new] = node
+            del self.paths[old]
+            self.paths[new] = node
 
-def write(self, path, data, offset, fh):
-    with self.lock:
-        try:
-            print(f"[write] {path}, offset={offset}, len(data)={len(data)}")
-            inode = self._get_inode_by_path(path)
-            if inode is None:
+    def link(self, target, name):
+        with self.global_lock:
+            inode = self.paths.get(target)
+            if not inode:
                 raise FuseOSError(errno.ENOENT)
-            buf = self.data[inode]
-            new_len = offset + len(data)
-            if len(buf) < new_len:
-                buf.extend(b'\x00' * (new_len - len(buf)))
-            buf[offset:offset + len(data)] = data
-            self.inodes[inode]['size'] = len(buf)
+            parent = self._get_parent(name)
+            name_final = os.path.basename(name)
+            parent.children[name_final] = inode
+            inode.nlink += 1
+            self.paths[name] = inode
+
+    def open(self, path, flags):
+        inode = self.paths.get(path)
+        if not inode:
+            raise FuseOSError(errno.ENOENT)
+        self.fd += 1
+        return self.fd
+
+    def read(self, path, size, offset, fh):
+        inode = self.paths.get(path)
+        if not inode:
+            raise FuseOSError(errno.ENOENT)
+        with inode.lock:
+            return inode.data[offset:offset + size]
+
+    def write(self, path, data, offset, fh):
+        inode = self.paths.get(path)
+        if not inode:
+            raise FuseOSError(errno.ENOENT)
+        with inode.lock:
+            inode.size = max(inode.size, offset + len(data))
+            if len(inode.data) < offset + len(data):
+                inode.data.extend(b'\x00' * (offset + len(data) - len(inode.data)))
+            inode.data[offset:offset + len(data)] = data
+            inode.mtime = time.time()
             return len(data)
-        except Exception as e:
-            self._log_error("write", path, e)
-            raise FuseOSError(errno.EIO)
-
-def truncate(self, path, length, fh=None):
-    with self.lock:
-        try:
-            print(f"[truncate] {path}, length={length}")
-            inode = self._get_inode_by_path(path)
-            if inode is None:
+        
+    def truncate(self, path, length, fh=None):
+        with self.global_lock:
+            if path not in self.paths:
                 raise FuseOSError(errno.ENOENT)
-            buf = self.data[inode]
-            if length < len(buf):
-                self.data[inode] = buf[:length]
-            else:
-                buf.extend(b'\x00' * (length - len(buf)))
-            self.inodes[inode]['size'] = length
-        except Exception as e:
-            self._log_error("truncate", path, e)
-            raise FuseOSError(errno.EIO)
+            inode = self.paths[path]
+            with inode.lock:
+                current_size = inode.size
+                if length < current_size:
+                    inode.data = inode.data[:length]
+                else:
+                    inode.data += bytearray(length - current_size)
+                inode.size = length
+                inode.mtime = inode.ctime = time.time()
 
-if __name__ == '__main__':
-    import sys
-    if len(sys.argv) != 2:
-        print("Usage: python3 ramfs.py <mountpoint>")
-        exit(1)
-    FUSE(RAMFS(), sys.argv[1], foreground=True, allow_other=True, ro=False)
+    def chmod(self, path, mode):
+        return 0
+
+    def chown(self, path, uid, gid):
+        return 0
+
+    def utimens(self, path, times=None):
+        now = time.time()
+        atime, mtime = times if times else (now, now)
+        with self.global_lock:
+            if path not in self.paths:
+                raise FuseOSError(errno.ENOENT)
+            inode = self.paths[path]
+            with inode.lock:
+                inode.atime = atime
+                inode.mtime = mtime
+
+    def flush(self, path, fh):
+        inode = self.paths.get(path)
+        if inode.is_dir:
+            return 0
+
+        full_path = self._full_path(path)
+        temp_path = full_path + ".tmp"
+
+        try:
+            # 确保目录存在
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+
+            # 写入临时文件
+            with open(temp_path, 'wb') as f:
+                with inode.lock:
+                    f.write(inode.data)
+
+            # 原子替换
+            os.replace(temp_path, full_path)
+            return 0
+
+        except PermissionError as e:
+            print(f"[flush] Permission denied when writing to {full_path}")
+            raise FuseOSError(errno.EPERM)
+        except FileNotFoundError as e:
+            print(f"[flush] Persist directory missing: {self.persist_dir}")
+            raise FuseOSError(errno.ENOENT)
+        except Exception as e:
+            print(f"[flush] Unexpected error during flush for {path}: {e}")
+            raise FuseOSError(errno.EIO)
+            
+    def _get_parent(self, path):
+        parent_path = os.path.dirname(path) or '/'
+        return self.paths.get(parent_path)
+

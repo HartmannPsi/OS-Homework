@@ -1,18 +1,14 @@
-import os, sys, subprocess, time
+import sys
+import os
+from ramfs import RAMfs
+from fuse import FUSE
 
-if len(sys.argv) != 2:
-    print("Usage: python3 launcher.py <mountpoint>")
-    sys.exit(1)
+if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        print("Usage: python3 launcher.py <mountpoint> <persist_dir>")
+        exit(1)
 
-mountpoint = sys.argv[1]
-
-try:
-    subprocess.run(["fusermount", "-u", mountpoint], check=False)
-    print(f"Launching RAMFS at {mountpoint}. Ctrl+C to unmount.")
-    subprocess.run(["python3", "ramfs.py", mountpoint], check=True)
-except KeyboardInterrupt:
-    print("\n[Ctrl+C] Unmounting...")
-    subprocess.run(["fusermount", "-u", mountpoint], check=False)
-    time.sleep(0.5)
-    os.rmdir(mountpoint)
-    print(f"Unmounted and removed {mountpoint}.")
+    mountpoint = sys.argv[1]
+    persist_dir = sys.argv[2]
+    os.makedirs(persist_dir, exist_ok=True)
+    FUSE(RAMfs(persist_dir), mountpoint, nothreads=False, foreground=True, allow_other=True, rw=True)
