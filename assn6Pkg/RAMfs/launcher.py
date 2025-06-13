@@ -5,7 +5,6 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 mountpoint = sys.argv[1]
-os.makedirs(mountpoint, exist_ok=True)
 
 try:
     subprocess.run(["fusermount", "-u", mountpoint], check=False)

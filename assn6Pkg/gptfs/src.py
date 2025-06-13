@@ -64,7 +64,6 @@ class GPTfs(LoggingMixIn, Operations):
                 self.files[session]["error"] = str(e)
             return len(data)
         elif session and ftype in ["output", "error"]:
-            # 通常不会对这些文件写入，但可允许
             self.files[session][ftype] = data.decode()
             return len(data)
         else:

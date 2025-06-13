@@ -2,6 +2,7 @@ import os, time, errno, threading
 from collections import defaultdict
 from fuse import FUSE, Operations, LoggingMixIn, FuseOSError
 import stat
+import pwd, grp
 
 class RAMFS(LoggingMixIn, Operations):
     def __init__(self):
@@ -10,12 +11,14 @@ class RAMFS(LoggingMixIn, Operations):
         self.data = {}
         self.path_map = {'/': 1}
         self.inodes[1] = {
-            'mode': stat.S_IFDIR | 0o755,
+            'mode': stat.S_IFDIR | 0o777,
             'nlink': 2,
             'size': 0,
             'ctime': time.time(),
             'mtime': time.time(),
             'atime': time.time(),
+            'uid': int(os.environ.get("SUDO_UID", os.getuid())),
+            'gid': int(os.environ.get("SUDO_GID", os.getgid())),
             'children': {}
         }
         self.data[1] = None
@@ -32,17 +35,23 @@ def getattr(self, path, fh=None):
     with self.lock:
         try:
             print(f"[getattr] {path}")
-            inode = self._get_inode_by_path(path)
-            if inode is None:
+            if path == '/':
+                inode_id = self.inodes[1]
+            else:
+                inode_id = self._get_inode_by_path(path)
+            if inode_id is None:
                 raise FuseOSError(errno.ENOENT)
-            entry = self.inodes[inode]
+            entry = self.inodes[inode_id]
+            print(f"[getattr] path={path}, mode={oct(entry['mode'])}, uid={entry.get('uid')}, gid={entry.get('gid')}")
             return {
                 'st_mode': entry['mode'],
                 'st_nlink': entry['nlink'],
                 'st_size': entry['size'],
                 'st_ctime': entry['ctime'],
                 'st_mtime': entry['mtime'],
-                'st_atime': entry['atime']
+                'st_atime': entry['atime'],
+                'st_uid': entry.get('uid', os.getuid()),
+                'st_gid': entry.get('gid', os.getgid()),
             }
         except Exception as e:
             self._log_error("getattr", path, e)
@@ -257,4 +266,4 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         print("Usage: python3 ramfs.py <mountpoint>")
         exit(1)
-    FUSE(RAMFS(), sys.argv[1], foreground=True, allow_other=True)
+    FUSE(RAMFS(), sys.argv[1], foreground=True, allow_other=True, ro=False)
