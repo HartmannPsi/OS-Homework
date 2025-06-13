@@ -37,19 +37,52 @@ class RAMfs(LoggingMixIn, Operations):
     def _full_path(self, path):
         return os.path.join(self.persist_dir, path.lstrip('/'))
 
+    # def getattr(self, path, fh=None):
+    #     inode = self.paths.get(path)
+    #     if not inode:
+    #         raise FuseOSError(errno.ENOENT)
+    #     st = {
+    #         'st_mode': inode.mode,
+    #         'st_nlink': inode.nlink,
+    #         'st_size': inode.size,
+    #         'st_ctime': inode.ctime,
+    #         'st_mtime': inode.mtime,
+    #         'st_atime': inode.atime,
+    #     }
+    #     return st
+
     def getattr(self, path, fh=None):
-        inode = self.paths.get(path)
-        if not inode:
-            raise FuseOSError(errno.ENOENT)
-        st = {
-            'st_mode': inode.mode,
-            'st_nlink': inode.nlink,
-            'st_size': inode.size,
-            'st_ctime': inode.ctime,
-            'st_mtime': inode.mtime,
-            'st_atime': inode.atime,
-        }
-        return st
+        with self.global_lock:
+            inode = self.paths.get(path)
+            if inode:
+                return {
+                    'st_mode': inode.mode,
+                    'st_nlink': inode.nlink,
+                    'st_size': inode.size,
+                    'st_ctime': inode.ctime,
+                    'st_mtime': inode.mtime,
+                    'st_atime': inode.atime,
+                }
+
+            parts = path.strip('/').split('/')
+            curr = self.root
+            current_path = ''
+            for part in parts:
+                if not curr.is_dir or part not in curr.children:
+                    raise FuseOSError(errno.ENOENT)
+                curr = curr.children[part]
+                current_path += '/' + part
+                self.paths[current_path] = curr
+
+            return {
+                'st_mode': curr.mode,
+                'st_nlink': curr.nlink,
+                'st_size': curr.size,
+                'st_ctime': curr.ctime,
+                'st_mtime': curr.mtime,
+                'st_atime': curr.atime,
+            }
+
 
     def readdir(self, path, fh):
         inode = self.paths.get(path)
@@ -122,11 +155,34 @@ class RAMfs(LoggingMixIn, Operations):
             inode = self.paths.get(target)
             if not inode:
                 raise FuseOSError(errno.ENOENT)
+            if inode.is_dir:
+                raise FuseOSError(errno.EPERM)
             parent = self._get_parent(name)
             name_final = os.path.basename(name)
             parent.children[name_final] = inode
             inode.nlink += 1
             self.paths[name] = inode
+
+    def lookup(self, parent_inode_path, name):
+        with self.global_lock:
+            parent_inode = self.paths.get(parent_inode_path)
+            if not parent_inode or not parent_inode.is_dir:
+                raise FuseOSError(errno.ENOENT)
+
+            if name in parent_inode.children:
+                inode = parent_inode.children[name]
+                full_path = os.path.join(parent_inode_path.rstrip('/'), name)
+                self.paths[full_path] = inode
+                return {
+                    'st_mode': inode.mode,
+                    'st_nlink': inode.nlink,
+                    'st_size': inode.size,
+                    'st_ctime': inode.ctime,
+                    'st_mtime': inode.mtime,
+                    'st_atime': inode.atime,
+                }
+
+            raise FuseOSError(errno.ENOENT)
 
     def open(self, path, flags):
         inode = self.paths.get(path)
@@ -173,6 +229,12 @@ class RAMfs(LoggingMixIn, Operations):
 
     def chown(self, path, uid, gid):
         return 0
+    
+    def getxattr(self, path, name, position=0):
+        return b''
+
+    def listxattr(self, path):
+        return []
 
     def utimens(self, path, times=None):
         now = time.time()
@@ -194,15 +256,10 @@ class RAMfs(LoggingMixIn, Operations):
         temp_path = full_path + ".tmp"
 
         try:
-            # 确保目录存在
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
-
-            # 写入临时文件
             with open(temp_path, 'wb') as f:
                 with inode.lock:
                     f.write(inode.data)
-
-            # 原子替换
             os.replace(temp_path, full_path)
             return 0
 
