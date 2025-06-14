@@ -66,6 +66,7 @@
 #include <asm/io.h>
 #include <asm/unistd.h>
 #include <generated/utsrelease.h>
+#include <linux/kv_pair.h>
 #include <linux/uaccess.h>
 
 #include "uid16.h"
@@ -2500,7 +2501,6 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info) {
 #endif /* CONFIG_COMPAT */
 
 #define __KV_HASH 1024
-#include <linux/kv_pair.h>
 
 SYSCALL_DEFINE2(write_kv, int, k, int, v) {
   struct task_struct *current_task = current;

@@ -32,6 +32,7 @@
 #include <linux/key.h>
 #include <linux/kprobes.h>
 #include <linux/kthread.h>
+#include <linux/kv_pair.h>
 #include <linux/mempolicy.h>
 #include <linux/mm.h>
 #include <linux/module.h>
@@ -176,9 +177,7 @@ void put_task_struct_rcu_user(struct task_struct *task) {
     call_rcu(&task->rcu, delayed_put_task_struct);
 }
 
-#include <linux/kv_pair.h>
-
-static void clean_kv_store(struct tsk_struct *p) {
+static void clean_kv_store(struct task_struct *p) {
   for (int i = 0; i < 1024; ++i) {
     struct hlist_node *n;
     struct kv_pair *entry;

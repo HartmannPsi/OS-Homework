@@ -54,6 +54,7 @@ edk2/**
 !linux-5.19.17/fs/ramfs/inode.c
 !linux-5.19.17/fs/ramfs/file-mmu.c
 !linux-5.19.17/fs/ramfs/file-nommu.c
+!linux-5.19.17/fs/ramfs/internal.h
 
 !linux-5.19.17/arch/
 !linux-5.19.17/arch/x86/
@@ -89,3 +90,6 @@ uefi/
 assn6Pkg/RAMfs/ramfs_persist/
 assn6Pkg/RAMfs/ramfs/
 assn6Pkg/RAMfs/__pycache__/
+
+comp_edk_alt.sh
+debug.txt

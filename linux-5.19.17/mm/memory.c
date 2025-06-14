@@ -68,7 +68,7 @@
 #include <linux/perf_event.h>
 #include <linux/pfn_t.h>
 #include <linux/ptrace.h>
-#include <linux/rdma_swap.h>
+// #include <linux/rdma_swap.h>
 #include <linux/rmap.h>
 #include <linux/sched/coredump.h>
 #include <linux/sched/mm.h>
@@ -4708,27 +4708,27 @@ vm_fault_t handle_mm_fault(struct vm_area_struct *vma, unsigned long address,
   if (flags & FAULT_FLAG_USER) mem_cgroup_enter_user_fault();
 
   // 尝试从远程RDMA获取页面
-  if (!is_vm_hugetlb_page(vma) && use_rdma_swap()) {
-    struct page *rdma_page = rdma_swap_try_get_page(address);
-    if (rdma_page) {
-      // 映射远程页面到当前地址空间
-      int map_ret = vm_insert_page(vma, address, rdma_page);
-      if (map_ret == 0) {
-        ret = VM_FAULT_NOPAGE;
-        goto out_rdma;
-      } else {
-        // 如果映射失败，释放页面，继续原始流程
-        __free_page(rdma_page);
-      }
-    }
-  }
+  // if (!is_vm_hugetlb_page(vma) && use_rdma_swap()) {
+  //   struct page *rdma_page = rdma_swap_try_get_page(address);
+  //   if (rdma_page) {
+  //     // 映射远程页面到当前地址空间
+  //     int map_ret = vm_insert_page(vma, address, rdma_page);
+  //     if (map_ret == 0) {
+  //       ret = VM_FAULT_NOPAGE;
+  //       goto out_rdma;
+  //     } else {
+  //       // 如果映射失败，释放页面，继续原始流程
+  //       __free_page(rdma_page);
+  //     }
+  //   }
+  // }
 
   if (unlikely(is_vm_hugetlb_page(vma)))
     ret = hugetlb_fault(vma->vm_mm, vma, address, flags);
   else
     ret = __handle_mm_fault(vma, address, flags);
 
-out_rdma:
+  // out_rdma:
 
   if (flags & FAULT_FLAG_USER) {
     mem_cgroup_exit_user_fault();

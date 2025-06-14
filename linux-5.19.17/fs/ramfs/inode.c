@@ -24,14 +24,21 @@
  */
 
 #include <linux/backing-dev.h>
+#include <linux/buffer_head.h>
+#include <linux/file.h>
 #include <linux/fs.h>
 #include <linux/fs_context.h>
 #include <linux/fs_parser.h>
+#include <linux/fs_struct.h>
 #include <linux/highmem.h>
 #include <linux/init.h>
 #include <linux/magic.h>
+#include <linux/mount.h>
+#include <linux/mutex.h>
+#include <linux/namei.h>
 #include <linux/pagemap.h>
 #include <linux/parser.h>
+#include <linux/proc_fs.h>
 #include <linux/ramfs.h>
 #include <linux/sched.h>
 #include <linux/seq_file.h>

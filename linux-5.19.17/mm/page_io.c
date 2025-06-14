@@ -21,7 +21,7 @@
 #include <linux/mm.h>
 #include <linux/pagemap.h>
 #include <linux/psi.h>
-#include <linux/rdma_swap.h>
+// #include <linux/rdma_swap.h>
 #include <linux/sched/task.h>
 #include <linux/swap.h>
 #include <linux/swapops.h>
@@ -493,16 +493,16 @@ void __swap_read_unplug(struct swap_iocb *sio) {
   if (ret != -EIOCBQUEUED) sio_read_complete(&sio->iocb, ret);
 }
 
-struct page *rdma_swap_try_get_page(unsigned long addr) {
-  struct page *page = alloc_page(GFP_KERNEL);
-  if (!page) return NULL;
+// struct page *rdma_swap_try_get_page(unsigned long addr) {
+//   struct page *page = alloc_page(GFP_KERNEL);
+//   if (!page) return NULL;
 
-  // 通过 RDMA 从远程节点读取页面数据
-  int ret = rdma_read_page(addr, page_address(page));
-  if (ret < 0) {
-    __free_page(page);
-    return NULL;
-  }
+//   // 通过 RDMA 从远程节点读取页面数据
+//   int ret = rdma_read_page(addr, page_address(page));
+//   if (ret < 0) {
+//     __free_page(page);
+//     return NULL;
+//   }
 
-  return page;
-}
+//   return page;
+// }
